@@ -1,13 +1,18 @@
 import { useRef, useState } from "react";
 import { generateChat } from '../../http/api';
+import { useChatStore } from "../store/chat-store";
 
 const UserInputContainer = ({ type, setMessages}) => {
     const userInputRef = useRef();
     const [loading, setLoading] = useState(false);
+    const setError = useChatStore(store => store.setError);
+    const setIsGenerating = useChatStore(store => store.setIsGenerating);
 
   const askLLM = async (text) => {
     try {
+      setError({ isError: false, errorMsg: "" });
       setLoading(true);
+      setIsGenerating(true);
       const response = await generateChat({ message: text });
       const data = response.data;
       // Expecting: { message: response, id: Date.now(), role: "assistant" }
@@ -18,9 +23,11 @@ const UserInputContainer = ({ type, setMessages}) => {
       ]);
     } catch(e) {
       console.log("Error", e);
+      setError({ isError: true, errorMsg: "Something went wrong. Try again!"});
     }
     finally {
       setLoading(false);
+      setIsGenerating(false);
       const scrollElement = document.getElementById('chat-center')
       scrollElement.scrollTo({
         top: document.body.scrollHeight,
